@@ -217,17 +217,14 @@ bool platform_get_font_path(TTFFontDescriptor* font, utf8* buffer, size_t size)
     {
         bool is_substitute = false;
 
-        // FontConfig implicitly falls back to any default font it is configured to handle.
-        // In our implementation, this cannot account for supported character sets, leading
-        // to unrendered characters (tofu) when trying to render e.g. CJK characters using a
-        // Western (sans-)serif font. We therefore ignore substitutions FontConfig provides,
-        // and instead rely on exact matches on the fonts predefined for each font family.
         FcChar8* matched_font_face = nullptr;
-        if (FcPatternGetString(match, FC_FULLNAME, 0, &matched_font_face) == FcResultMatch
+        if (FcPatternGetString(match, FC_FILE, 0, &matched_font_face) == FcResultMatch
             && strcmp(font->font_name, reinterpret_cast<const char*>(matched_font_face)) != 0)
         {
-            log_verbose("FontConfig provided substitute font %s -- disregarding.", matched_font_face);
+            found = true;
             is_substitute = true;
+            safe_strcpy(buffer, reinterpret_cast<utf8*>(matched_font_face), size);
+            log_verbose("Using FontConfig provided substitute font %s", matched_font_face);
         }
 
         FcChar8* filename = nullptr;
